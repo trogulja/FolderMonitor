@@ -1,23 +1,68 @@
-const { app, BrowserWindow } = require('electron');
+'use strict';
+
+const { app, BrowserWindow, Menu } = require('electron');
+const windowStateKeeper = require('electron-window-state');
 const path = require('path');
+let environment = 'production';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
+if (require('electron-squirrel-startup')) {
+  // eslint-disable-line global-require
   app.quit();
 }
 
+// Auto SET ENV - when deployed, paths change somewhat
+if (process.execPath.search('electron.exe') !== -1) environment = 'development';
+
+const mainMenuTemplate = [
+  {
+    label: 'File',
+    submenu: [
+      {
+        label: 'Exit',
+        accelerator: process.platform == 'darwin' ? 'Command+Q' : 'Ctrl+Q',
+        click() {
+          app.quit();
+        },
+      },
+    ],
+  },
+];
+if (process.platform === 'darwin') mainMenuTemplate.unshift({});
+if (environment === 'development') {
+  mainMenuTemplate.push({
+    label: 'Developer Tools',
+    submenu: [{ role: 'toggledevtools' }, { role: 'reload' }],
+  });
+}
+
 const createWindow = () => {
+  const mainWindowState = windowStateKeeper({
+    defaultWidth: 400,
+    defaultHeight: 400,
+  });
+
+  const allowResize = environment === 'development' ? true : false;
+
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    x: mainWindowState.x,
+    y: mainWindowState.y,
+    width: allowResize ? mainWindowState.width : mainWindowState.defaultWidth,
+    height: allowResize ? mainWindowState.height : mainWindowState.defaultHeight,
+    resizeable: allowResize,
   });
+
+  mainWindowState.manage(mainWindow);
 
   // and load the index.html of the app.
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
+  const mainMenu = Menu.buildFromTemplate(mainMenuTemplate);
+  Menu.setApplicationMenu(mainMenu);
+
   // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 };
 
 // This method will be called when Electron has finished
