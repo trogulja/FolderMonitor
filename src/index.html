@@ -2,10 +2,82 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>Hello World!</title>
+    <title>FolderMonitor app v2.0</title>
+    <!-- <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css" />
+    <script src="js/bootstrap.min.js"></script> -->
   </head>
-  <body>
-    <h1>💖🎉😍 Hello World!</h1>
-    <p>Welcome to your Electron application.</p>
+  <body class="container-fluid w-100 m-0 p-0">
+    <div class="bg-info vw-100 vh-100 d-flex flex-column align-items-center justify-content-center">
+      <div class="w-100 d-flex flex-column p-5">
+        <div class="card mb-5 bg-light">
+          <h5 class="card-header">Slanje u Claro</h5>
+          <div class="card-body">
+            <ul class="list-group">
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span class="w-25 text-left">
+                  <button type="button" class="btn btn-warning" id="localFolder1">1</button>
+                </span>
+                <span class="w-50 d-flex justify-content-between align-items-center">
+                  <span class="w-25 text-center">dti export</span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="feather feather-chevrons-right text-warning"
+                  >
+                    <polyline points="13 17 18 12 13 7"></polyline>
+                    <polyline points="6 17 11 12 6 7"></polyline>
+                  </svg>
+                  <span class="w-25 text-center">claro in</span>
+                </span>
+                <span class="w-25 text-right">
+                  <button type="button" class="btn btn-warning" id="remoteFolder1">0</button>
+                </span>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="card bg-light">
+          <h5 class="card-header text-right">Vraćanje iz Clara u DTI</h5>
+          <div class="card-body">
+            <ul class="list-group">
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span class="w-25 text-left">
+                  <button type="button" class="btn btn-success" id="localFolder2">1</button>
+                </span>
+                <span class="w-50 d-flex justify-content-between align-items-center">
+                  <span class="w-25 text-center">dti refresh</span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="feather feather-chevrons-left text-success"
+                  >
+                    <polyline points="11 17 6 12 11 7"></polyline>
+                    <polyline points="18 17 13 12 18 7"></polyline>
+                  </svg>
+                  <span class="w-25 text-center">claro out</span>
+                </span>
+                <span class="w-25 text-right">
+                  <button type="button" class="btn btn-success" id="remoteFolder2">0</button>
+                </span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

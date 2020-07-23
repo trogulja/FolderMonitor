@@ -27,5 +27,7 @@
  */
 
 import './index.css';
+import './css/bootstrap.min.css';
+// import './js/bootstrap.min.js';
 
 console.log('👋 This message is being logged by "renderer.js", included via webpack');

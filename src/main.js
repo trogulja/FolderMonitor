@@ -12,7 +12,7 @@ if (require('electron-squirrel-startup')) {
 }
 
 // Auto SET ENV - when deployed, paths change somewhat
-if (process.execPath.search('electron.exe') !== -1) environment = 'development';
+if (process.execPath.search('electron.exe') !== -1) environment = 'development-nottrue';
 
 const mainMenuTemplate = [
   {
@@ -38,8 +38,8 @@ if (environment === 'development') {
 
 const createWindow = () => {
   const mainWindowState = windowStateKeeper({
-    defaultWidth: 400,
-    defaultHeight: 400,
+    defaultWidth: 600,
+    defaultHeight: 580,
   });
 
   const allowResize = environment === 'development' ? true : false;
@@ -48,9 +48,11 @@ const createWindow = () => {
   const mainWindow = new BrowserWindow({
     x: mainWindowState.x,
     y: mainWindowState.y,
-    width: allowResize ? mainWindowState.width : mainWindowState.defaultWidth,
-    height: allowResize ? mainWindowState.height : mainWindowState.defaultHeight,
-    resizeable: allowResize,
+    width: allowResize ? mainWindowState.width : 600,
+    height: allowResize ? mainWindowState.height : 580,
+    minWidth: 600,
+    minHeight: 580,
+    resizable: allowResize,
   });
 
   mainWindowState.manage(mainWindow);
