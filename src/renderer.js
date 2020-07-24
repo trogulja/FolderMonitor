@@ -29,5 +29,39 @@
 import './index.css';
 import './css/bootstrap.min.css';
 // import './js/bootstrap.min.js';
+import Vue from './js/vue.min.js';
 
-console.log('👋 This message is being logged by "renderer.js", included via webpack');
+// console.log('👋 This message is being logged by "renderer.js", included via webpack');
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    input: {
+      title: 'Slanje u Claro',
+      local: {
+        name: 'dti export',
+        value: 11,
+      },
+      remote: {
+        name: 'claro in',
+        value: 10,
+      },
+    },
+    output: {
+      title: 'Vraćanje iz Clara u DTI',
+      local: {
+        name: 'dti refresh',
+        value: 45,
+      },
+      remote: {
+        name: 'claro out',
+        value: 5,
+      },
+    },
+  },
+});
+
+setTimeout(() => {
+  // console.log(app)
+  app.output.remote.value = 70000;
+}, 1000);

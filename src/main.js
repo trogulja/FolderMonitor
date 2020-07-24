@@ -12,7 +12,7 @@ if (require('electron-squirrel-startup')) {
 }
 
 // Auto SET ENV - when deployed, paths change somewhat
-if (process.execPath.search('electron.exe') !== -1) environment = 'development-nottrue';
+if (process.execPath.search('electron.exe') !== -1) environment = 'development';
 
 const mainMenuTemplate = [
   {
