@@ -1,6 +1,6 @@
 'use strict';
 
-const { app, BrowserWindow, Menu } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain } = require('electron');
 const windowStateKeeper = require('electron-window-state');
 const path = require('path');
 let environment = 'production';
@@ -36,6 +36,7 @@ if (environment === 'development') {
   });
 }
 
+let mainWindow;
 const createWindow = () => {
   const mainWindowState = windowStateKeeper({
     defaultWidth: 600,
@@ -45,7 +46,7 @@ const createWindow = () => {
   const allowResize = environment === 'development' ? true : false;
 
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     x: mainWindowState.x,
     y: mainWindowState.y,
     width: allowResize ? mainWindowState.width : 600,
@@ -53,6 +54,9 @@ const createWindow = () => {
     minWidth: 600,
     minHeight: 580,
     resizable: allowResize,
+    webPreferences: {
+      nodeIntegration: true,
+    },
   });
 
   mainWindowState.manage(mainWindow);
@@ -91,3 +95,8 @@ app.on('activate', () => {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
+
+ipcMain.on('open-folder', function (event, arg) {
+  mainWindow.webContents.send('update', { a: 'input', b: 'local', n: 15 });
+  console.log(arg);
+});

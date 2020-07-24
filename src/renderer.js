@@ -28,8 +28,8 @@
 
 import './index.css';
 import './css/bootstrap.min.css';
-// import './js/bootstrap.min.js';
 import Vue from './js/vue.min.js';
+import { ipcRenderer } from 'electron';
 
 // console.log('👋 This message is being logged by "renderer.js", included via webpack');
 
@@ -40,28 +40,34 @@ var app = new Vue({
       title: 'Slanje u Claro',
       local: {
         name: 'dti export',
-        value: 11,
+        value: 0,
       },
       remote: {
         name: 'claro in',
-        value: 10,
+        value: 0,
       },
     },
     output: {
       title: 'Vraćanje iz Clara u DTI',
       local: {
         name: 'dti refresh',
-        value: 45,
+        value: 0,
       },
       remote: {
         name: 'claro out',
-        value: 5,
+        value: 0,
       },
+    },
+  },
+  methods: {
+    open: function (folder) {
+      if (!folder) return false;
+      ipcRenderer.send('open-folder', folder);
     },
   },
 });
 
-setTimeout(() => {
-  // console.log(app)
-  app.output.remote.value = 70000;
-}, 1000);
+// Set listeners for data change
+ipcRenderer.on('update', function (event, arg) {
+  app[arg.a][arg.b].value = Number(arg.n);
+});
