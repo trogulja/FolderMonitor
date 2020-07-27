@@ -1,10 +1,11 @@
 'use strict';
 
-const { app, BrowserWindow, Menu, ipcMain } = require('electron');
+const { app, remote, BrowserWindow, Menu, ipcMain } = require('electron');
 const windowStateKeeper = require('electron-window-state');
 const path = require('path');
 const fs = require('fs');
 const fileWatcher = require('chokidar');
+const Shell = require('node-powershell');
 let environment = 'production';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -98,33 +99,78 @@ app.on('activate', () => {
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
 
-ipcMain.on('open-folder', function (event, arg) {
-  mainWindow.webContents.send('update', { a: 'input', b: 'local', n: 15 });
-  console.log(arg);
-});
-
 /**
  * File watcher logic
  */
 
+const ps = new Shell({
+  verbose: true,
+  executionPolicy: 'Bypass',
+  noProfile: true,
+});
+
+// -- these are testing folders... real ones will be hardcoded
+// const folders = {
+//   input: {
+//     local: path.join('C:', 'folderTest', 'input', 'local'),
+//     remote: path.join('C:', 'folderTest', 'input', 'remote'),
+//   },
+//   output: {
+//     local: path.join('C:', 'folderTest', 'output', 'local'),
+//     remote: path.join('C:', 'folderTest', 'output', 'remote'),
+//   },
+// };
+
+const username = process.env.USERNAME ? process.env.USERNAME : 'nepoznatinetko';
 const folders = {
   input: {
-    local: path.join('C:', 'folderTest', 'input', 'local'),
-    remote: path.join('C:', 'folderTest', 'input', 'remote'),
+    local: path.join((app || remote.app).getPath('documents'), '_claro automatika'),
+    remote: path.join('\\\\10.64.8.41\\ftp_claro', 'CRO', 'IN'),
   },
   output: {
-    local: path.join('C:', 'folderTest', 'output', 'local'),
-    remote: path.join('C:', 'folderTest', 'output', 'remote'),
+    local: path.join('C:', 'LoginApp', 'Refresh News Media'),
+    remote: path.join('\\\\10.64.8.41\\ftp_claro', 'CRO', 'OUT', username),
   },
 };
 
 function initFolderWatcher() {
   ['input', 'output'].forEach((el) => {
-    // fs.access
+    ['local', 'remote'].forEach((el2) => {
+      fs.access(folders[el][el2], fs.constants.W_OK, (err) => {
+        console.log(`${folders[el][el2]} ${err ? 'does not exist' : 'exists'}`);
+        if (err) return;
+
+        StartWatcher(folders[el][el2]);
+      });
+    });
   });
 }
 
 function StartWatcher() {
-  const watcher = fileWatcher.watch(directory, { ignored: /(^|[\/\\])\../, persistent: true });
-  
+  // const watcher = fileWatcher.watch(directory, { ignored: /(^|[\/\\])\../, persistent: true });
+  return true;
 }
+
+initFolderWatcher();
+
+/**
+ * InterProcess Communication
+ */
+
+ipcMain.on('open-folder', function (event, arg) {
+  // mainWindow.webContents.send('update', { a: 'input', b: 'local', n: 15 });
+  // arg == 'input.local'
+  const tp = arg.split('.');
+  const target = folders[tp[0]][tp[1]];
+  if (!target) return 'error!';
+  ps.addCommand('ii "' + target + '"');
+  ps.invoke()
+    .then((output) => {
+      console.log(output);
+    })
+    .catch((err) => {
+      console.log(err);
+      ps.dispose();
+    });
+  console.log(arg);
+});
