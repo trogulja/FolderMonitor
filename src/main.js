@@ -128,6 +128,7 @@ const folders = {
     remote: path.join('\\\\10.64.8.41\\ftp_claro', 'CRO', 'OUT', username),
   },
 };
+const watchers = { input: { local: null, remote: null }, output: { local: null, remote: null } };
 let timer;
 let timerDuration = 10000;
 let timerStartMS = 0;
@@ -136,30 +137,35 @@ function timerStart() {
   if (timerStartMS !== 0) clearTimeout(timer);
   timerStartMS = new Date().getTime();
   timer = setTimeout(() => {
-    invokeFileCopy();
+    invokePS();
   }, timerDuration);
-}
-
-function reportTimerDuration() {
-  return timerStartMS ? timerDuration - new Date().getTime() - timerStartMS : 0;
 }
 
 function timerClear() {
   if (timerStartMS === 0) return false;
-  console.log('There was some error, so timerClear() was invoked.');
+  mainWindow.webContents.send('error', 'timerClear() called due to an error with PS.');
   clearTimeout(timer);
   timerStartMS = 0;
 }
 
-function invokeFileCopy() {
+function invokePS() {
   ps.invoke()
     .then((output) => {
+      clearTimeout(timer);
+      timerStartMS = 0;
       console.log(output);
     })
     .catch((err) => {
       timerClear();
-      console.log(err);
+      mainWindow.webContents.send('critical', err);
       ps.dispose();
+      ['input', 'output'].forEach((el) => {
+        ['local', 'remote'].forEach((el2) => {
+          watchers[el][el2].close().then(() => {
+            mainWindow.webContents.send('status', { a: el, b: el2, m: 'stopped' });
+          });
+        });
+      });
     });
 }
 
@@ -169,14 +175,15 @@ function initFolderWatcher() {
       fs.access(folders[el][el2], fs.constants.W_OK, (err) => {
         console.log(`${folders[el][el2]} ${err ? 'does not exist' : 'exists'}`);
         if (err) return;
-
-        StartWatcher(folders[el][el2], el2);
+        // TODO: if folder doesn't exist, create it... if we can't, throw error
+        // TODO: display interproc communication in vue frontend
+        StartWatcher(folders[el][el2], el, el2);
       });
     });
   });
 }
 
-function StartWatcher(folder, type) {
+function StartWatcher(folder, el, el2) {
   const options = {
     persistent: true,
     ignored: /((^|[\/\\])\..|\.txt)/,
@@ -187,41 +194,56 @@ function StartWatcher(folder, type) {
       pollInterval: 500,
     },
   };
-  if (type == 'remote') options.usePolling = true;
-  const watcher = fileWatcher.watch(folder, {
+  if (el2 == 'remote') options.usePolling = true;
+  watchers[el][el2] = fileWatcher.watch(folder, {
     persistent: true,
     ignored: /((^|[\/\\])\..|.\.txt)/,
     ignoreInitial: false,
     usePolling: true,
   });
 
-  function onWatcherReady() {
-    console.log(`Watching folder: ${folder}`);
-  }
-
-  watcher
+  watchers[el][el2]
     .on('add', function (file) {
-      console.log(`${path.basename(file)} seen!`);
+      if (el === 'input' && el2 === 'local') {
+        // local input moves to remote input
+        ps.addCommand(
+          `Move-Item -Path "${file}" -Destination "${path.join(
+            folders.input.remote,
+            path.basename(file)
+          )}"`
+        );
+        timerStart();
+      } else if (el === 'output' && el2 === 'remote') {
+        // remote output moves to local output
+        ps.addCommand(
+          `Move-Item -Path "${file}" -Destination "${path.join(
+            folders.output.local,
+            path.basename(file)
+          )}"`
+        );
+        timerStart();
+      }
+      mainWindow.webContents.send('update', { a: el, b: el2, n: 1 });
     })
     .on('addDir', function (file) {
-      console.log(`${file} - new directory created!`);
+      mainWindow.webContents.send('warning', `${file} - new directory created!`);
     })
     .on('change', function (file) {
-      console.log(`${path.basename(file)} changed!`);
+      mainWindow.webContents.send('warning', `${path.basename(file)} changed!`);
     })
     .on('unlink', function (file) {
-      console.log(`${path.basename(file)} has been deleted!`);
+      mainWindow.webContents.send('update', { a: el, b: el2, n: -1 });
     })
     .on('unlinkDir', function (file) {
-      console.log(`${file} - directory deleted!`);
+      mainWindow.webContents.send('warning', `${file} - directory deleted!`);
     })
     .on('error', function (file) {
-      console.log('Error happened!', error);
+      mainWindow.webContents.send('error', error);
     })
-    .on('ready', onWatcherReady);
+    .on('ready', function () {
+      mainWindow.webContents.send('info', { a: el, b: el2, m: 'watching' });
+    });
 }
-
-initFolderWatcher();
 
 /**
  * InterProcess Communication
@@ -234,20 +256,10 @@ ipcMain.on('open-folder', function (event, arg) {
   const target = folders[tp[0]][tp[1]];
   if (!target) return 'error!';
   ps.addCommand('ii "' + target + '"');
-  ps.invoke()
-    .then((output) => {
-      if (timerStartMS !== 0) {
-        console.log(`PS invoke forced ${reportTimerDuration()} ms before regular cycle.`);
-        timerStartMS = 0;
-      } else {
-        console.log(`PS invoke called manually (no file copy in queue)`);
-      }
-      console.log(output);
-    })
-    .catch((err) => {
-      timerClear();
-      console.log(err);
-      ps.dispose();
-    });
+  invokePS();
   console.log(arg);
+});
+
+ipcMain.on('start-watcher', function (event, arg) {
+  initFolderWatcher();
 });

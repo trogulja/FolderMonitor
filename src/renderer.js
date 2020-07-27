@@ -65,9 +65,34 @@ var app = new Vue({
       ipcRenderer.send('open-folder', folder);
     },
   },
+  mounted() {
+    ipcRenderer.send('start-watcher', 'init');
+  },
 });
 
 // Set listeners for data change
 ipcRenderer.on('update', function (event, arg) {
-  app[arg.a][arg.b].value = Number(arg.n);
+  app[arg.a][arg.b].value += Number(arg.n);
+});
+
+ipcRenderer.on('status', function (event, arg) {
+  // arg = { a: 'input', b: 'local', m: 'watching' }
+  // arg = { a: 'output', b: 'remote', m: 'stopped' }
+});
+
+ipcRenderer.on('info', function (event, arg) {
+  // arg = string we need to display
+  console.log(arg);
+});
+
+ipcRenderer.on('warning', function (event, arg) {
+  console.log(arg);
+});
+
+ipcRenderer.on('error', function (event, arg) {
+  console.log(arg);
+});
+
+ipcRenderer.on('critical', function (event, arg) {
+  console.log(arg);
 });
