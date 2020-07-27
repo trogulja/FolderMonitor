@@ -103,11 +103,7 @@ app.on('activate', () => {
  * File watcher logic
  */
 
-const ps = new Shell({
-  verbose: true,
-  executionPolicy: 'Bypass',
-  noProfile: true,
-});
+const ps = new Shell({ verbose: true, executionPolicy: 'Bypass', noProfile: true });
 
 // -- these are testing folders... real ones will be hardcoded
 // const folders = {
@@ -132,6 +128,40 @@ const folders = {
     remote: path.join('\\\\10.64.8.41\\ftp_claro', 'CRO', 'OUT', username),
   },
 };
+let timer;
+let timerDuration = 10000;
+let timerStartMS = 0;
+
+function timerStart() {
+  if (timerStartMS !== 0) clearTimeout(timer);
+  timerStartMS = new Date().getTime();
+  timer = setTimeout(() => {
+    invokeFileCopy();
+  }, timerDuration);
+}
+
+function reportTimerDuration() {
+  return timerStartMS ? timerDuration - new Date().getTime() - timerStartMS : 0;
+}
+
+function timerClear() {
+  if (timerStartMS === 0) return false;
+  console.log('There was some error, so timerClear() was invoked.');
+  clearTimeout(timer);
+  timerStartMS = 0;
+}
+
+function invokeFileCopy() {
+  ps.invoke()
+    .then((output) => {
+      console.log(output);
+    })
+    .catch((err) => {
+      timerClear();
+      console.log(err);
+      ps.dispose();
+    });
+}
 
 function initFolderWatcher() {
   ['input', 'output'].forEach((el) => {
@@ -140,15 +170,55 @@ function initFolderWatcher() {
         console.log(`${folders[el][el2]} ${err ? 'does not exist' : 'exists'}`);
         if (err) return;
 
-        StartWatcher(folders[el][el2]);
+        StartWatcher(folders[el][el2], el2);
       });
     });
   });
 }
 
-function StartWatcher() {
-  // const watcher = fileWatcher.watch(directory, { ignored: /(^|[\/\\])\../, persistent: true });
-  return true;
+function StartWatcher(folder, type) {
+  const options = {
+    persistent: true,
+    ignored: /((^|[\/\\])\..|\.txt)/,
+    ignoreInitial: false,
+    usePolling: false,
+    awaitWriteFinish: {
+      stabilityThreshold: 2000,
+      pollInterval: 500,
+    },
+  };
+  if (type == 'remote') options.usePolling = true;
+  const watcher = fileWatcher.watch(folder, {
+    persistent: true,
+    ignored: /((^|[\/\\])\..|.\.txt)/,
+    ignoreInitial: false,
+    usePolling: true,
+  });
+
+  function onWatcherReady() {
+    console.log(`Watching folder: ${folder}`);
+  }
+
+  watcher
+    .on('add', function (file) {
+      console.log(`${path.basename(file)} seen!`);
+    })
+    .on('addDir', function (file) {
+      console.log(`${file} - new directory created!`);
+    })
+    .on('change', function (file) {
+      console.log(`${path.basename(file)} changed!`);
+    })
+    .on('unlink', function (file) {
+      console.log(`${path.basename(file)} has been deleted!`);
+    })
+    .on('unlinkDir', function (file) {
+      console.log(`${file} - directory deleted!`);
+    })
+    .on('error', function (file) {
+      console.log('Error happened!', error);
+    })
+    .on('ready', onWatcherReady);
 }
 
 initFolderWatcher();
@@ -166,9 +236,16 @@ ipcMain.on('open-folder', function (event, arg) {
   ps.addCommand('ii "' + target + '"');
   ps.invoke()
     .then((output) => {
+      if (timerStartMS !== 0) {
+        console.log(`PS invoke forced ${reportTimerDuration()} ms before regular cycle.`);
+        timerStartMS = 0;
+      } else {
+        console.log(`PS invoke called manually (no file copy in queue)`);
+      }
       console.log(output);
     })
     .catch((err) => {
+      timerClear();
       console.log(err);
       ps.dispose();
     });
