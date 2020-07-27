@@ -3,6 +3,8 @@
 const { app, BrowserWindow, Menu, ipcMain } = require('electron');
 const windowStateKeeper = require('electron-window-state');
 const path = require('path');
+const fs = require('fs');
+const fileWatcher = require('chokidar');
 let environment = 'production';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -100,3 +102,29 @@ ipcMain.on('open-folder', function (event, arg) {
   mainWindow.webContents.send('update', { a: 'input', b: 'local', n: 15 });
   console.log(arg);
 });
+
+/**
+ * File watcher logic
+ */
+
+const folders = {
+  input: {
+    local: path.join('C:', 'folderTest', 'input', 'local'),
+    remote: path.join('C:', 'folderTest', 'input', 'remote'),
+  },
+  output: {
+    local: path.join('C:', 'folderTest', 'output', 'local'),
+    remote: path.join('C:', 'folderTest', 'output', 'remote'),
+  },
+};
+
+function initFolderWatcher() {
+  ['input', 'output'].forEach((el) => {
+    // fs.access
+  });
+}
+
+function StartWatcher() {
+  const watcher = fileWatcher.watch(directory, { ignored: /(^|[\/\\])\../, persistent: true });
+  
+}
