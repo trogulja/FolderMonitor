@@ -78,6 +78,7 @@ ipcRenderer.on('update', function (event, arg) {
 ipcRenderer.on('status', function (event, arg) {
   // arg = { a: 'input', b: 'local', m: 'watching' }
   // arg = { a: 'output', b: 'remote', m: 'stopped' }
+  console.log(arg);
 });
 
 ipcRenderer.on('info', function (event, arg) {

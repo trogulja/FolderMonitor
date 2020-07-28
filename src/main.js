@@ -161,11 +161,13 @@ function invokePS() {
       ps.dispose();
       ['input', 'output'].forEach((el) => {
         ['local', 'remote'].forEach((el2) => {
-          watchers[el][el2].close().then(() => {
-            mainWindow.webContents.send('status', { a: el, b: el2, m: 'stopped' });
-          });
+          watchers[el][el2].close();
+          console.log(el, el2, 'closed');
+          mainWindow.webContents.send('status', { a: el, b: el2, m: 'stopped' });
         });
       });
+      // TODO - reinit after crash? not even sure crash should ever happen?
+      // TODO - pause / play option in the GUI!
     });
 }
 
@@ -173,11 +175,19 @@ function initFolderWatcher() {
   ['input', 'output'].forEach((el) => {
     ['local', 'remote'].forEach((el2) => {
       fs.access(folders[el][el2], fs.constants.W_OK, (err) => {
-        console.log(`${folders[el][el2]} ${err ? 'does not exist' : 'exists'}`);
-        if (err) return;
-        // TODO: if folder doesn't exist, create it... if we can't, throw error
+        if (err) {
+          fs.mkdir(folders[el][el2], { recursive: false }, (err2) => {
+            if (err2) {
+              console.log(`Unable to create ${folders[el][el2]} because of error.`, err2);
+              throw new Error(err2);
+            } else {
+              StartWatcher(folders[el][el2], el, el2);
+            }
+          });
+        } else {
+          StartWatcher(folders[el][el2], el, el2);
+        }
         // TODO: display interproc communication in vue frontend
-        StartWatcher(folders[el][el2], el, el2);
       });
     });
   });
@@ -186,7 +196,7 @@ function initFolderWatcher() {
 function StartWatcher(folder, el, el2) {
   const options = {
     persistent: true,
-    ignored: /((^|[\/\\])\..|\.txt)/,
+    ignored: /((^|[\/\\])\..|.\.txt)/,
     ignoreInitial: false,
     usePolling: false,
     awaitWriteFinish: {
@@ -195,47 +205,41 @@ function StartWatcher(folder, el, el2) {
     },
   };
   if (el2 == 'remote') options.usePolling = true;
-  watchers[el][el2] = fileWatcher.watch(folder, {
-    persistent: true,
-    ignored: /((^|[\/\\])\..|.\.txt)/,
-    ignoreInitial: false,
-    usePolling: true,
-  });
+  // console.log(folder, options);
+  watchers[el][el2] = fileWatcher.watch(folder, options);
 
   watchers[el][el2]
     .on('add', function (file) {
       if (el === 'input' && el2 === 'local') {
-        // local input moves to remote input
         ps.addCommand(
           `Move-Item -Path "${file}" -Destination "${path.join(
             folders.input.remote,
             path.basename(file)
-          )}"`
+          )}" -Force`
         );
         timerStart();
       } else if (el === 'output' && el2 === 'remote') {
-        // remote output moves to local output
         ps.addCommand(
           `Move-Item -Path "${file}" -Destination "${path.join(
             folders.output.local,
             path.basename(file)
-          )}"`
+          )}" -Force`
         );
         timerStart();
       }
       mainWindow.webContents.send('update', { a: el, b: el2, n: 1 });
     })
     .on('addDir', function (file) {
-      mainWindow.webContents.send('warning', `${file} - new directory created!`);
+      // mainWindow.webContents.send('warning', `${file} - new directory created!`);
     })
     .on('change', function (file) {
-      mainWindow.webContents.send('warning', `${path.basename(file)} changed!`);
+      // mainWindow.webContents.send('warning', `${path.basename(file)} changed!`);
     })
     .on('unlink', function (file) {
       mainWindow.webContents.send('update', { a: el, b: el2, n: -1 });
     })
     .on('unlinkDir', function (file) {
-      mainWindow.webContents.send('warning', `${file} - directory deleted!`);
+      // mainWindow.webContents.send('warning', `${file} - directory deleted!`);
     })
     .on('error', function (file) {
       mainWindow.webContents.send('error', error);
@@ -243,6 +247,10 @@ function StartWatcher(folder, el, el2) {
     .on('ready', function () {
       mainWindow.webContents.send('info', { a: el, b: el2, m: 'watching' });
     });
+  // .on('raw', function (event, directory, details) {
+  //   // This event should be triggered everytime something happens.
+  //   // console.log('Raw event info:', event, directory, details);
+  // });
 }
 
 /**
@@ -257,7 +265,6 @@ ipcMain.on('open-folder', function (event, arg) {
   if (!target) return 'error!';
   ps.addCommand('ii "' + target + '"');
   invokePS();
-  console.log(arg);
 });
 
 ipcMain.on('start-watcher', function (event, arg) {

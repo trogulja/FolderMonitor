@@ -1,8 +1,8 @@
 {
   "name": "foldermonitor",
-  "productName": "foldermonitor",
-  "version": "1.0.0",
-  "description": "My Electron application description",
+  "productName": "FolderMonitor",
+  "version": "2.0.0",
+  "description": "Makes folders hot and pushes files around!",
   "main": ".webpack/main",
   "scripts": {
     "start": "electron-forge start",
@@ -77,9 +77,10 @@
     "url-loader": "^4.1.0"
   },
   "dependencies": {
-    "chokidar": "^3.4.1",
+    "chokidar": "3.1.1",
     "electron-squirrel-startup": "^1.0.0",
     "electron-window-state": "^5.0.3",
-    "node-powershell": "^4.0.0"
+    "node-powershell": "^4.0.0",
+    "update-electron-app": "^1.5.0"
   }
 }
