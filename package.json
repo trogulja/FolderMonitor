@@ -3,6 +3,10 @@
   "productName": "FolderMonitor",
   "version": "2.0.0",
   "description": "Makes folders hot and pushes files around!",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/trogulja/FolderMonitor.git"
+  },
   "main": ".webpack/main",
   "scripts": {
     "start": "electron-forge start",

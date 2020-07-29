@@ -14,6 +14,9 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
+// Set autoupdate functionality
+require('update-electron-app')();
+
 // Auto SET ENV - when deployed, paths change somewhat
 if (process.execPath.search('electron.exe') !== -1) environment = 'development';
 
