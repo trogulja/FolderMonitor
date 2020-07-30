@@ -64,6 +64,12 @@ var app = new Vue({
       if (!folder) return false;
       ipcRenderer.send('open-folder', folder);
     },
+    stopwatching: function() {
+      ipcRenderer.send('stop-watcher', 'init');
+    },
+    startwatching: function() {
+      ipcRenderer.send('start-watcher', 'init');
+    }
   },
   mounted() {
     ipcRenderer.send('start-watcher', 'init');
@@ -72,7 +78,7 @@ var app = new Vue({
 
 // Set listeners for data change
 ipcRenderer.on('update', function (event, arg) {
-  app[arg.a][arg.b].value += Number(arg.n);
+  app[arg.a][arg.b].value = Number(arg.n);
 });
 
 ipcRenderer.on('status', function (event, arg) {

@@ -106,7 +106,7 @@ app.on('activate', () => {
  * File watcher logic
  */
 
-const ps = new Shell({ verbose: true, executionPolicy: 'Bypass', noProfile: true });
+let ps;
 
 // -- these are testing folders... real ones will be hardcoded
 // const folders = {
@@ -123,15 +123,30 @@ const ps = new Shell({ verbose: true, executionPolicy: 'Bypass', noProfile: true
 const username = process.env.USERNAME ? process.env.USERNAME : 'nepoznatinetko';
 const folders = {
   input: {
-    local: path.join((app || remote.app).getPath('documents'), '_claro automatika'),
-    remote: path.join('\\\\10.64.8.41\\ftp_claro', 'CRO', 'IN'),
+    local: {
+      path: path.join((app || remote.app).getPath('documents'), '_claro automatika'),
+      watcher: null,
+      status: 0,
+    },
+    remote: {
+      path: path.join('\\\\10.64.8.41\\ftp_claro', 'CRO', 'IN'),
+      watcher: null,
+      status: 0,
+    },
   },
   output: {
-    local: path.join('C:', 'LoginApp', 'Refresh News Media'),
-    remote: path.join('\\\\10.64.8.41\\ftp_claro', 'CRO', 'OUT', username),
+    local: {
+      path: path.join('C:', 'LoginApp', 'Refresh News Media'),
+      watcher: null,
+      status: 0,
+    },
+    remote: {
+      path: path.join('\\\\10.64.8.41\\ftp_claro', 'CRO', 'OUT', username),
+      watcher: null,
+      status: 0,
+    },
   },
 };
-const watchers = { input: { local: null, remote: null }, output: { local: null, remote: null } };
 let timer;
 let timerDuration = 10000;
 let timerStartMS = 0;
@@ -156,39 +171,82 @@ function invokePS() {
     .then((output) => {
       clearTimeout(timer);
       timerStartMS = 0;
-      console.log(output);
-    })
-    .catch((err) => {
-      timerClear();
-      mainWindow.webContents.send('critical', err);
-      ps.dispose();
+      // console.log(output);
       ['input', 'output'].forEach((el) => {
         ['local', 'remote'].forEach((el2) => {
-          watchers[el][el2].close();
-          console.log(el, el2, 'closed');
-          mainWindow.webContents.send('status', { a: el, b: el2, m: 'stopped' });
+          fs.readdir(folders[el][el2].path, (err, files) => {
+            if (err) {
+              console.log('This error means we should reinit the app!');
+              disposeFolderWatcher();
+              setTimeout(() => {
+                initFolderWatcher();
+              }, 2000);
+              return false;
+            }
+            // TODO - at this point, output remote and input local should be empty!
+            if (
+              (el === 'input' && el2 === 'local' && files.length) ||
+              (el === 'output' && el2 === 'remote' && files.length)
+            ) {
+              console.log('this should be 0, but it is not!');
+              disposeFolderWatcher();
+              setTimeout(() => {
+                initFolderWatcher();
+              }, 2000);
+            }
+            folders[el][el2].status = files.length;
+            mainWindow.webContents.send('update', { a: el, b: el2, n: files.length });
+          });
         });
       });
-      // TODO - reinit after crash? not even sure crash should ever happen?
+    })
+    .catch((err) => {
+      mainWindow.webContents.send('critical', err);
+      disposeFolderWatcher();
       // TODO - pause / play option in the GUI!
     });
 }
 
-function initFolderWatcher() {
+function disposeFolderWatcher() {
+  timerClear();
+  ps.dispose();
   ['input', 'output'].forEach((el) => {
     ['local', 'remote'].forEach((el2) => {
-      fs.access(folders[el][el2], fs.constants.W_OK, (err) => {
+      folders[el][el2].watcher.close();
+      console.log(el, el2, 'closed');
+      mainWindow.webContents.send('status', { a: el, b: el2, m: 'stopped' });
+    });
+  });
+}
+
+function initFolderWatcher() {
+  ps = new Shell({ verbose: true, executionPolicy: 'Bypass', noProfile: true });
+  ['input', 'output'].forEach((el) => {
+    ['local', 'remote'].forEach((el2) => {
+      fs.access(folders[el][el2].path, fs.constants.W_OK, (err) => {
         if (err) {
-          fs.mkdir(folders[el][el2], { recursive: false }, (err2) => {
+          fs.mkdir(folders[el][el2].path, { recursive: false }, (err2) => {
             if (err2) {
-              console.log(`Unable to create ${folders[el][el2]} because of error.`, err2);
-              throw new Error(err2);
+              if (el === 'output' && el2 === 'local') {
+                const newRefresh = path.join('C:', 'LoginAppNew', 'Refresh News Media');
+                fs.access(newRefresh, fs.constants.W_OK, (err) => {
+                  if (err) {
+                    throw new Error(err);
+                  } else {
+                    folders[el][el2].path = newRefresh;
+                    StartWatcher(newRefresh, el, el2);
+                  }
+                });
+              } else {
+                console.log(`Unable to create ${folders[el][el2].path} because of error.`, err2);
+                throw new Error(err2);
+              }
             } else {
-              StartWatcher(folders[el][el2], el, el2);
+              StartWatcher(folders[el][el2].path, el, el2);
             }
           });
         } else {
-          StartWatcher(folders[el][el2], el, el2);
+          StartWatcher(folders[el][el2].path, el, el2);
         }
         // TODO: display interproc communication in vue frontend
       });
@@ -209,14 +267,14 @@ function StartWatcher(folder, el, el2) {
   };
   if (el2 == 'remote') options.usePolling = true;
   // console.log(folder, options);
-  watchers[el][el2] = fileWatcher.watch(folder, options);
+  folders[el][el2].watcher = fileWatcher.watch(folder, options);
 
-  watchers[el][el2]
+  folders[el][el2].watcher
     .on('add', function (file) {
       if (el === 'input' && el2 === 'local') {
         ps.addCommand(
           `Move-Item -Path "${file}" -Destination "${path.join(
-            folders.input.remote,
+            folders.input.remote.path,
             path.basename(file)
           )}" -Force`
         );
@@ -224,13 +282,14 @@ function StartWatcher(folder, el, el2) {
       } else if (el === 'output' && el2 === 'remote') {
         ps.addCommand(
           `Move-Item -Path "${file}" -Destination "${path.join(
-            folders.output.local,
+            folders.output.local.path,
             path.basename(file)
           )}" -Force`
         );
         timerStart();
       }
-      mainWindow.webContents.send('update', { a: el, b: el2, n: 1 });
+      folders[el][el2].status += 1;
+      mainWindow.webContents.send('update', { a: el, b: el2, n: folders[el][el2].status });
     })
     .on('addDir', function (file) {
       // mainWindow.webContents.send('warning', `${file} - new directory created!`);
@@ -239,7 +298,8 @@ function StartWatcher(folder, el, el2) {
       // mainWindow.webContents.send('warning', `${path.basename(file)} changed!`);
     })
     .on('unlink', function (file) {
-      mainWindow.webContents.send('update', { a: el, b: el2, n: -1 });
+      folders[el][el2].status += -1;
+      mainWindow.webContents.send('update', { a: el, b: el2, n: folders[el][el2].status });
     })
     .on('unlinkDir', function (file) {
       // mainWindow.webContents.send('warning', `${file} - directory deleted!`);
@@ -264,7 +324,7 @@ ipcMain.on('open-folder', function (event, arg) {
   // mainWindow.webContents.send('update', { a: 'input', b: 'local', n: 15 });
   // arg == 'input.local'
   const tp = arg.split('.');
-  const target = folders[tp[0]][tp[1]];
+  const target = folders[tp[0]][tp[1]].path;
   if (!target) return 'error!';
   ps.addCommand('ii "' + target + '"');
   invokePS();
@@ -273,3 +333,7 @@ ipcMain.on('open-folder', function (event, arg) {
 ipcMain.on('start-watcher', function (event, arg) {
   initFolderWatcher();
 });
+
+ipcMain.on('stop-watcher', function(event, arg) {
+  disposeFolderWatcher();
+})
