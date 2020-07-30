@@ -13,8 +13,23 @@ Klikom na jedan od brojeva (na slici su nule, jer su folderi prazni bili u tom t
 # Instalacija
 
 1. Instalacijski file se nalazi na adresi: [releases/](https://github.com/trogulja/FolderMonitor/releases), a zadnja verzija je: [FolderMonitor-1.0.1.Setup.exe](https://github.com/trogulja/FolderMonitor/releases/download/1.0.1/FolderMonitor-1.0.1.Setup.exe)
-2. Downloadate taj file i pokrenete ga - nije potreban administrator
-3. Nakon instalacije imate novi shortcut na desktopu s imenom FolderMonitor
+2. Downloadate taj file
+
+   - zbog zaštite od downloadanja .exe fileova, moguće je da se pojavi upozorenje:
+
+   ![Download warning](./readme/download_warning1.jpg 'Download warning')
+
+   - pa je potrebno odabrati "keep" opciju da se file ipak spremi lokalno:
+
+   ![Download warning keep](./readme/download_warning2.jpg 'Download warning keep')
+
+3. Pokrenite instalacijski file - nije potreban administrator
+
+   - no moguće je da windowsi neće odmah dopustiti instalaciju, već će pitati za dozvolu - potrebno je kliknuti na advanced, pa zatim na Run anyway:
+
+   ![Install protection](./readme/install_protection.jpg 'Install protection')
+
+4. Nakon instalacije imate novi shortcut na desktopu s imenom FolderMonitor
 
 # Kako koristiti app?
 
@@ -46,7 +61,7 @@ Klikom na jedan od brojeva (na slici su nule, jer su folderi prazni bili u tom t
 
 Zbog specifičnosti naše mreže, moguće je da u nekim rijetkim slučajevima dođe do pucanja jpeg fajlova. Trenutna verzija je to trebala popraviti, no testiranje na jako velikom broju fajlova s velikim opterećenjem nije napravljeno, pa molim da se na to pripazi i obavezno da se prijave sve puknute slike (ako se primjete)! 🔥🔥🔥
 
-**Prva pomoć**: *potrebno je nanovo dohvatiti taj file i pustiti ga u workflow.*
+**Prva pomoć**: _potrebno je nanovo dohvatiti taj file i pustiti ga u workflow._
 
 Primjer kako izgleda strgan jpg file:
 
@@ -58,6 +73,6 @@ Odnosno, isti taj file kako bi trebao izgledati:
 
 ### 2. Folderi se ne prazne
 
-U određenim, rijetkim, slučajevima je moguće da aplikacija ne uspije prebaciti file iz foldera u folder. Slike ostanu "*visiti*" u tim folderima... 🔥
+U određenim, rijetkim, slučajevima je moguće da aplikacija ne uspije prebaciti file iz foldera u folder. Slike ostanu "_visiti_" u tim folderima... 🔥
 
-**Prva pomoć**: *potrebno je ugasiti i ponovno upaliti aplikaciju, pa će kopiranje krenuti.*
+**Prva pomoć**: _potrebno je ugasiti i ponovno upaliti aplikaciju, pa će kopiranje krenuti._
