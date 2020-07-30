@@ -10,6 +10,12 @@ Klikom na jedan od brojeva (na slici su nule, jer su folderi prazni bili u tom t
 
 ![FolderMonitor app](./readme/app.png 'FolderMonitor app')
 
+# Instalacija
+
+1. Instalacijski file se nalazi na adresi: [releases/](https://github.com/trogulja/FolderMonitor/releases), a zadnja verzija je: [FolderMonitor-1.0.1.Setup.exe](https://github.com/trogulja/FolderMonitor/releases/download/1.0.1/FolderMonitor-1.0.1.Setup.exe)
+2. Downloadate taj file i pokrenete ga - nije potreban administrator
+3. Nakon instalacije imate novi shortcut na desktopu s imenom FolderMonitor
+
 # Kako koristiti app?
 
 ### 1. Pokreni app
@@ -25,7 +31,7 @@ Klikom na jedan od brojeva (na slici su nule, jer su folderi prazni bili u tom t
 
   ![Export Button](./readme/export_button.png 'Export Button')
 
-  u `📂 My Documents\_claro automatika\` folder.
+- u `📂 My Documents\_claro automatika\` folder.
 
   ![Export Options](./readme/export_options.png 'Export Options')
 
