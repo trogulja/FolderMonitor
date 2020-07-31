@@ -344,3 +344,12 @@ ipcMain.on('start-watcher', function (event, arg) {
 ipcMain.on('stop-watcher', function (event, arg) {
   disposeFolderWatcher();
 });
+
+ipcMain.on('status-update', function (event, arg) {
+  mainWindow.webContents.send('update-all', {
+    il: folders.input.local.status,
+    ir: folders.input.remote.status,
+    ol: folders.output.local.status,
+    or: folders.output.remote.status,
+  });
+});

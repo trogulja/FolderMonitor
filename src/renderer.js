@@ -64,21 +64,32 @@ var app = new Vue({
       if (!folder) return false;
       ipcRenderer.send('open-folder', folder);
     },
-    stopwatching: function() {
+    stopwatching: function () {
       ipcRenderer.send('stop-watcher', 'init');
     },
-    startwatching: function() {
+    startwatching: function () {
       ipcRenderer.send('start-watcher', 'init');
-    }
+    },
   },
   mounted() {
     ipcRenderer.send('start-watcher', 'init');
+    setInterval(() => {
+      ipcRenderer.send('status-update', 'init');
+    }, 15000);
   },
 });
 
 // Set listeners for data change
 ipcRenderer.on('update', function (event, arg) {
   app[arg.a][arg.b].value = Number(arg.n);
+});
+
+ipcRenderer.on('update-all', function (event, arg) {
+  app.input.local.value = Number(arg.il);
+  app.input.remote.value = Number(arg.ir);
+  app.output.local.value = Number(arg.ol);
+  app.output.remote.value = Number(arg.or);
+  console.log('Updated all values', arg);
 });
 
 ipcRenderer.on('status', function (event, arg) {
