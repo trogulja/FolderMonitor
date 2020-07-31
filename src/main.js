@@ -150,6 +150,17 @@ const folders = {
 let timer;
 let timerDuration = 10000;
 let timerStartMS = 0;
+let needRestart = false;
+
+let jobControl = setInterval(() => {
+  if (!needRestart) return false;
+  if (timerStartMS !== 0) return false;
+  needRestart = false;
+  disposeFolderWatcher();
+  setTimeout(() => {
+    initFolderWatcher();
+  }, 2000);
+}, 15000);
 
 function timerStart() {
   if (timerStartMS !== 0) clearTimeout(timer);
@@ -177,10 +188,7 @@ function invokePS() {
           fs.readdir(folders[el][el2].path, (err, files) => {
             if (err) {
               console.log('This error means we should reinit the app!');
-              disposeFolderWatcher();
-              setTimeout(() => {
-                initFolderWatcher();
-              }, 2000);
+              needRestart = true;
               return false;
             }
             // TODO - at this point, output remote and input local should be empty!
@@ -189,10 +197,7 @@ function invokePS() {
               (el === 'output' && el2 === 'remote' && files.length)
             ) {
               console.log('this should be 0, but it is not!');
-              disposeFolderWatcher();
-              setTimeout(() => {
-                initFolderWatcher();
-              }, 2000);
+              needRestart = true;
             }
             folders[el][el2].status = files.length;
             mainWindow.webContents.send('update', { a: el, b: el2, n: files.length });
@@ -290,6 +295,7 @@ function StartWatcher(folder, el, el2) {
       }
       folders[el][el2].status += 1;
       mainWindow.webContents.send('update', { a: el, b: el2, n: folders[el][el2].status });
+      if (folders[el][el2].status < 0) needRestart = true;
     })
     .on('addDir', function (file) {
       // mainWindow.webContents.send('warning', `${file} - new directory created!`);
@@ -300,6 +306,7 @@ function StartWatcher(folder, el, el2) {
     .on('unlink', function (file) {
       folders[el][el2].status += -1;
       mainWindow.webContents.send('update', { a: el, b: el2, n: folders[el][el2].status });
+      if (folders[el][el2].status < 0) needRestart = true;
     })
     .on('unlinkDir', function (file) {
       // mainWindow.webContents.send('warning', `${file} - directory deleted!`);
@@ -334,6 +341,6 @@ ipcMain.on('start-watcher', function (event, arg) {
   initFolderWatcher();
 });
 
-ipcMain.on('stop-watcher', function(event, arg) {
+ipcMain.on('stop-watcher', function (event, arg) {
   disposeFolderWatcher();
-})
+});
