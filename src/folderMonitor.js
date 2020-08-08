@@ -4,6 +4,7 @@ const Shell = require('node-powershell');
 const watcher = require('chokidar');
 const { debounce, set } = require('lodash');
 const { EventEmitter } = require('events');
+const { autoUpdater } = require('electron');
 let ps, ps2;
 
 // folder checker
@@ -116,39 +117,54 @@ class FolderMonitor {
 
   static preInitPS() {
     ps = new Shell(FolderMonitor.meta.optionsPS);
-    ps.addCommand(
-      'Get-Content $profile | ForEach-Object { if ($_ -match "chcp 65001") { Write-Host "fixed" } }'
-    ); // UTF-8 HAX!
+    ps.addCommand('Test-Path $profile');
     ps.invoke()
       .then((output) => {
-        if (/fixed/.test(output)) {
-          // UTF-8 is active, we don't need to call init
-          FolderMonitor.meta.busyPS = false;
-          debouncedReport();
-        } else {
-          ps.addCommand("Add-Content $profile ''");
-          ps.addCommand("Add-Content $profile 'chcp 65001 >$null'");
-          ps.invoke()
-            .then((output) => {
-              // This should be fixed now, restart PS and init
-              ps.dispose()
-                .then(() => {
-                  FolderMonitor.initPS();
+        if (/false/.test(output)) ps.addCommand('New-Item -type file -force $profile');
+        ps.addCommand(
+          'Get-Content $profile | ForEach-Object { if ($_ -match "chcp 65001") { Write-Host "fixed" } }'
+        ); // UTF-8 HAX!
+        ps.invoke()
+          .then((output) => {
+            if (/fixed/.test(output)) {
+              // UTF-8 is active, we don't need to call init
+              FolderMonitor.meta.busyPS = false;
+              debouncedReport();
+            } else {
+              ps.addCommand("Add-Content $profile ''");
+              ps.addCommand("Add-Content $profile 'chcp 65001 >$null'");
+              ps.invoke()
+                .then((output) => {
+                  // This should be fixed now, restart PS and init
+                  ps.dispose()
+                    .then(() => {
+                      FolderMonitor.initPS();
+                    })
+                    .catch((error) => {
+                      // dispose should not fail
+                      FolderMonitor.events.emit('log', {
+                        origin: 'preInitPS() - 4th - dispose',
+                        body: error,
+                      });
+                    });
                 })
                 .catch((error) => {
-                  // dispose should not fail
-                  throw new Error(error);
+                  // 3nd invoke should not fail (we can't write to $profile)
+                  FolderMonitor.events.emit('log', {
+                    origin: 'preInitPS() - 3rd - invoke',
+                    body: error,
+                  });
                 });
-            })
-            .catch((error) => {
-              // 2nd invoke should not fail (possibly we can't write to $profile)
-              throw new Error(error);
-            });
-        }
+            }
+          })
+          .catch((error) => {
+            // 2st invoke should not fail (we can't read our $profile)
+            FolderMonitor.events.emit('log', { origin: 'preInitPS() - 2nd - invoke', body: error });
+          });
       })
       .catch((error) => {
-        // 1st invoke should not fail (possibly we can't read our $profile)
-        throw new Error(error);
+        // 1st invoke should not fail (we can't check if $profile exists)
+        FolderMonitor.events.emit('log', { origin: 'preInitPS() - 1st - invoke', body: error });
       });
   }
 
@@ -201,12 +217,12 @@ class FolderMonitor {
     ps.invoke()
       .then((output) => {
         FolderMonitor.meta.busyPS = false;
-        FolderMonitor.events.emit('log', { origin: 'invokePS() - output', body: output })
+        FolderMonitor.events.emit('log', { origin: 'invokePS() - output', body: output });
         debouncedReport();
       })
       .catch((err) => {
         FolderMonitor.meta.busyPS = false;
-        FolderMonitor.events.emit('log', { origin: 'invokePS() - error', body: err })
+        FolderMonitor.events.emit('log', { origin: 'invokePS() - error', body: err });
         debouncedReport();
       });
   }
@@ -226,7 +242,7 @@ class FolderMonitor {
     try {
       this.folders[el][el2].watcher = watcher.watch(folder, options);
     } catch (error) {
-      FolderMonitor.events.emit('log', { origin: 'startWatcher - try create error', body: error })
+      FolderMonitor.events.emit('log', { origin: 'startWatcher - try create error', body: error });
     }
     this.folders[el][el2].watcher
       .on('add', function (file) {
@@ -257,7 +273,7 @@ class FolderMonitor {
         }
       })
       .on('error', function (file) {
-        FolderMonitor.events.emit('log', { origin: 'watcher error', body: file })
+        FolderMonitor.events.emit('log', { origin: 'watcher error', body: file });
       })
       .on('ready', function () {
         FolderMonitor.folders[el][el2].watching = true;
@@ -294,6 +310,16 @@ class FolderMonitor {
     if (report.output.remote) debouncedRemote();
     FolderMonitor.events.emit('report', report);
     // FolderMonitor.events.emit('log', { origin: 'reportFiles', body: report })
+  }
+
+  static shutDownForUpdate() {
+    ps.dispose()
+      .then(() => {
+        autoUpdater.quitAndInstall();
+      })
+      .catch((err) => {
+        FolderMonitor.events.emit('log', { origin: 'shutDownForUpdate() - error', body: err });
+      });
   }
 
   static events = new EventEmitter();
