@@ -2,7 +2,8 @@
 
 const { app, BrowserWindow, Menu, ipcMain } = require('electron');
 const windowStateKeeper = require('electron-window-state');
-let environment = 'production';
+// let environment = 'production';
+let environment = 'development';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) app.quit();
@@ -103,6 +104,10 @@ const FolderMonitor = require('./folderMonitor');
 
 FolderMonitor.events.on('report', function (report) {
   mainWindow.webContents.send('update', report);
+});
+
+FolderMonitor.events.on('log', function (body) {
+  mainWindow.webContents.send('log', body);
 });
 
 /**

@@ -72,9 +72,13 @@ var app = new Vue({
 
 // Set listeners for data change
 ipcRenderer.on('update', function (event, arg) {
-  ['input', 'output'].forEach(el => {
-    ['local', 'remote'].forEach(el2 => {
+  ['input', 'output'].forEach((el) => {
+    ['local', 'remote'].forEach((el2) => {
       app[el][el2].value = Number(arg[el][el2]);
-    })
-  })
+    });
+  });
+});
+
+ipcRenderer.on('log', function (event, arg) {
+  console.log(arg);
 });

@@ -201,13 +201,12 @@ class FolderMonitor {
     ps.invoke()
       .then((output) => {
         FolderMonitor.meta.busyPS = false;
-        console.log(output);
+        FolderMonitor.events.emit('log', { origin: 'invokePS() - output', body: output })
         debouncedReport();
       })
       .catch((err) => {
         FolderMonitor.meta.busyPS = false;
-        console.log('Error occured while invoking PS!');
-        console.log(err);
+        FolderMonitor.events.emit('log', { origin: 'invokePS() - error', body: err })
         debouncedReport();
       });
   }
@@ -227,8 +226,7 @@ class FolderMonitor {
     try {
       this.folders[el][el2].watcher = watcher.watch(folder, options);
     } catch (error) {
-      console.log('we got an error!');
-      console.log(error);
+      FolderMonitor.events.emit('log', { origin: 'startWatcher - try create error', body: error })
     }
     this.folders[el][el2].watcher
       .on('add', function (file) {
@@ -238,29 +236,28 @@ class FolderMonitor {
       })
       .on('addDir', function (file) {
         if (FolderMonitor.folders[el][el2].watching) {
-          console.log('addDir event');
-          console.log(file);
+          // console.log('addDir event');
+          // console.log(file);
         }
       })
       .on('change', function (file) {
         if (FolderMonitor.folders[el][el2].watching) {
-          console.log('change event');
-          console.log(el, el2, path.basename(file));
+          // console.log('change event');
+          // console.log(el, el2, path.basename(file));
         }
       })
       .on('unlink', function (file) {
-        console.log('unlink', file);
+        // console.log('unlink', file);
         if (FolderMonitor.folders[el][el2].watching) FolderMonitor.delFile({ el, el2, file });
       })
       .on('unlinkDir', function (file) {
         if (FolderMonitor.folders[el][el2].watching) {
-          console.log('unlinkDir event');
-          console.log(file);
+          // console.log('unlinkDir event');
+          // console.log(file);
         }
       })
       .on('error', function (file) {
-        console.log('error event');
-        console.log(file);
+        FolderMonitor.events.emit('log', { origin: 'watcher error', body: file })
       })
       .on('ready', function () {
         FolderMonitor.folders[el][el2].watching = true;
@@ -296,7 +293,7 @@ class FolderMonitor {
     if (report.input.local) debouncedLocal();
     if (report.output.remote) debouncedRemote();
     FolderMonitor.events.emit('report', report);
-    console.log(report);
+    // FolderMonitor.events.emit('log', { origin: 'reportFiles', body: report })
   }
 
   static events = new EventEmitter();
