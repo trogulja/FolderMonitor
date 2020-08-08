@@ -64,53 +64,17 @@ var app = new Vue({
       if (!folder) return false;
       ipcRenderer.send('open-folder', folder);
     },
-    stopwatching: function () {
-      ipcRenderer.send('stop-watcher', 'init');
-    },
-    startwatching: function () {
-      ipcRenderer.send('start-watcher', 'init');
-    },
   },
   mounted() {
     ipcRenderer.send('start-watcher', 'init');
-    setInterval(() => {
-      ipcRenderer.send('status-update', 'init');
-    }, 15000);
   },
 });
 
 // Set listeners for data change
 ipcRenderer.on('update', function (event, arg) {
-  app[arg.a][arg.b].value = Number(arg.n);
-});
-
-ipcRenderer.on('update-all', function (event, arg) {
-  app.input.local.value = Number(arg.il);
-  app.input.remote.value = Number(arg.ir);
-  app.output.local.value = Number(arg.ol);
-  app.output.remote.value = Number(arg.or);
-  console.log('Updated all values', arg);
-});
-
-ipcRenderer.on('status', function (event, arg) {
-  // arg = { a: 'input', b: 'local', m: 'watching' }
-  // arg = { a: 'output', b: 'remote', m: 'stopped' }
-  console.log(arg);
-});
-
-ipcRenderer.on('info', function (event, arg) {
-  // arg = string we need to display
-  console.log(arg);
-});
-
-ipcRenderer.on('warning', function (event, arg) {
-  console.log(arg);
-});
-
-ipcRenderer.on('error', function (event, arg) {
-  console.log(arg);
-});
-
-ipcRenderer.on('critical', function (event, arg) {
-  console.log(arg);
+  ['input', 'output'].forEach(el => {
+    ['local', 'remote'].forEach(el2 => {
+      app[el][el2].value = Number(arg[el][el2]);
+    })
+  })
 });

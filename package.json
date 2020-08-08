@@ -67,6 +67,9 @@
     }
   },
   "devDependencies": {
+    "@babel/core": "^7.11.1",
+    "@babel/plugin-proposal-class-properties": "^7.10.4",
+    "@babel/preset-env": "^7.11.0",
     "@electron-forge/cli": "6.0.0-beta.52",
     "@electron-forge/maker-deb": "6.0.0-beta.52",
     "@electron-forge/maker-rpm": "6.0.0-beta.52",
@@ -74,11 +77,13 @@
     "@electron-forge/maker-zip": "6.0.0-beta.52",
     "@electron-forge/plugin-webpack": "6.0.0-beta.52",
     "@marshallofsound/webpack-asset-relocator-loader": "^0.5.0",
+    "babel-loader": "^8.1.0",
     "css-loader": "^3.0.0",
     "electron": "9.1.1",
     "node-loader": "^0.6.0",
     "style-loader": "^0.23.1",
-    "url-loader": "^4.1.0"
+    "url-loader": "^4.1.0",
+    "webpack": "^4.44.1"
   },
   "dependencies": {
     "chokidar": "3.1.1",
