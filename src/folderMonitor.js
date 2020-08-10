@@ -121,7 +121,9 @@ class FolderMonitor {
     ps.invoke()
       .then((output) => {
         // There is no profile, we need to create it
-        if (/false/.test(output)) {
+        console.log('here we got output from test-path on the next line');
+        console.dir({ output });
+        if (!/true/i.test(output)) {
           ps.addCommand('New-Item -type file -force $profile');
           ps.invoke()
             .then((output) => {
