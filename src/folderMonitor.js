@@ -120,7 +120,35 @@ class FolderMonitor {
     ps.addCommand('Test-Path $profile');
     ps.invoke()
       .then((output) => {
-        if (/false/.test(output)) ps.addCommand('New-Item -type file -force $profile');
+        // There is no profile, we need to create it
+        if (/false/.test(output)) {
+          ps.addCommand('New-Item -type file -force $profile');
+          ps.invoke()
+            .then((output) => {
+              FolderMonitor.events.emit('log', {
+                origin: 'preInitPS() - $profile creation invoke()',
+                body: output,
+              });
+              ps.dispose()
+                .then(() => {
+                  FolderMonitor.preInitPS();
+                })
+                .catch((error) => {
+                  FolderMonitor.events.emit('log', {
+                    origin: 'preInitPS() - $profile creation dispose() error',
+                    body: error,
+                  });
+                });
+            })
+            .catch((error) => {
+              FolderMonitor.events.emit('log', {
+                origin: 'preInitPS() - $profile creation invoke() error',
+                body: error,
+              });
+            });
+          return;
+        }
+
         ps.addCommand(
           'Get-Content $profile | ForEach-Object { if ($_ -match "chcp 65001") { Write-Host "fixed" } }'
         ); // UTF-8 HAX!
