@@ -106,6 +106,28 @@ app.on('activate', () => {
 // code. You can also put them in separate files and import them here.
 
 /**
+ * Logs
+ */
+const log = require('electron-log')
+if (environment === 'production') {
+  Object.assign(console, log.functions);
+  log.transports.file.level = 'debug';
+}
+
+// Handle errors
+log.catchErrors({
+  showDialog: false,
+  onError(error, versions, submitIssue) {
+    log.error('Error (' + error.message + '):\n```' + error.stack + '\n```\n' + `OS: ${versions.os}` + '\n```App: ' + versions.app);
+
+    submitIssue('https://github.com/trogulja/FolderWatchNotify/issues/new', {
+      title: `Error report for ${versions.app}`,
+      body: 'Error:\n```' + error.stack + '\n```\n' + `OS: ${versions.os}`,
+    });
+  },
+});
+
+/**
  * File watcher logic
  */
 

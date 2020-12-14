@@ -1,4 +1,4 @@
-# FolderMonitor v1.0.9
+# FolderMonitor v1.0.10
 
 Electron app that automates asset roundtrip between two systems (DTI and Claro) and their hotfolders. Tailor made for Obrada Fotografija department in Styria Hrvatska (hardcoded folder paths).
 

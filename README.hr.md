@@ -8,7 +8,7 @@ Klikom na jedan od brojeva (na slici su nule, jer su folderi prazni bili u tom t
 
 # Instalacija
 
-1. Instalacijski file se nalazi na adresi: [releases/](https://github.com/trogulja/FolderMonitor/releases), a zadnja verzija je: [FolderMonitor-1.0.9.Setup.exe](https://github.com/trogulja/FolderMonitor/releases/download/1.0.9/FolderMonitor-1.0.9.Setup.exe)
+1. Instalacijski file se nalazi na adresi: [releases/](https://github.com/trogulja/FolderMonitor/releases), a zadnja verzija je: [FolderMonitor-1.0.10.Setup.exe](https://github.com/trogulja/FolderMonitor/releases/download/1.0.10/FolderMonitor-1.0.10.Setup.exe)
 2. Downloadate taj file
 
    - zbog zaštite od downloadanja .exe fileova, moguće je da se pojavi upozorenje:
