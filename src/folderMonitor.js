@@ -9,7 +9,7 @@ let ps, ps2;
 
 // folder checker
 let localTest = path.join(process.env.TEMP || process.env.TMP, 'test_folders');
-let ftpClaro = '\\\\10.64.8.41\\ftp_claro';
+let ftpClaro = '\\\\10.64.8.160\\ftp_claro';
 let loginAppOld = path.join('C:', 'LoginApp');
 let loginAppNew = path.join('C:', 'LoginAppNew');
 let loginApp = fs.existsSync(loginAppOld)
@@ -36,7 +36,7 @@ class FolderMonitor {
       remote: {
         path: testMode
           ? path.join(localTest, 'input_remote')
-          : path.join('\\\\10.64.8.41\\ftp_claro', 'CRO', 'IN'),
+          : path.join('\\\\10.64.8.160\\ftp_claro', 'CRO', 'IN'),
         watcher: null,
         watching: false,
         files: new Set(),
@@ -55,7 +55,7 @@ class FolderMonitor {
         path: testMode
           ? path.join(localTest, 'output_remote')
           : path.join(
-              '\\\\10.64.8.41\\ftp_claro',
+              '\\\\10.64.8.160\\ftp_claro',
               'CRO',
               'OUT',
               process.env.USERNAME ? process.env.USERNAME : 'nepoznatinetko'
