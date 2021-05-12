@@ -72,3 +72,4 @@ Odnosno, isti taj file kako bi trebao izgledati:
 U određenim, rijetkim, slučajevima je moguće da aplikacija ne uspije prebaciti file iz foldera u folder. Slike ostanu "_visiti_" u tim folderima... 🔥
 
 **Prva pomoć**: _potrebno je ugasiti i ponovno upaliti aplikaciju, pa će kopiranje krenuti._
+
