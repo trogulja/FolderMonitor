@@ -14,4 +14,3 @@ Because of the way node-powershell works, in order to set codepage on the fly an
 1. read $profile and check for 'chcp 65001'
 2. if it's not there, add `chcp 65001 >$null` to $profile
 3. restart powershell for changes to take effect
-
